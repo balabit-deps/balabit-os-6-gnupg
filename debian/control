@@ -1,0 +1,99 @@
+Source: gnupg
+Section: utils
+Priority: important
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Debian GnuPG-Maintainers <pkg-gnupg-maint@lists.alioth.debian.org>
+Uploaders: Sune Vuorela <debian@pusling.com>,
+           Eric Dorland <eric@debian.org>,
+           Daniel Kahn Gillmor <dkg@fifthhorseman.net>,
+           Thijs Kinkhorst <thijs@debian.org>
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>> 9),
+               dh-autoreconf,
+               file,
+               gettext (>= 0.19.3),
+               libbz2-dev,
+               libcurl4-gnutls-dev,
+               libldap2-dev,
+               libreadline-dev,
+               libusb-dev [!hurd-i386],
+               libz-dev
+XS-Testsuite: autopkgtest
+Homepage: https://www.gnupg.org
+Vcs-Browser: https://anonscm.debian.org/gitweb/?p=pkg-gnupg/gnupg.git
+Vcs-Git: git://anonscm.debian.org/pkg-gnupg/gnupg.git
+
+Package: gnupg
+Architecture: any
+Multi-Arch: foreign
+Depends: gpgv, ${misc:Depends}, ${shlibs:Depends}
+Suggests: ${shlibs:Suggests}, gnupg-curl, gnupg-doc, libpcsclite1, parcimonie, xloadimage | imagemagick | eog
+Description: GNU privacy guard - a free PGP replacement
+ GnuPG is GNU's tool for secure communication and data storage.
+ It can be used to encrypt data and to create digital signatures.
+ It includes an advanced key management facility and is compliant
+ with the proposed OpenPGP Internet standard as described in RFC 4880.
+ .
+ GnuPG 1.4 is the standalone, non-modularized series. In contrast to
+ the version 2 series, shipped with the gnupg2 package, it comes
+ with no support for S/MIME and some other tools useful for desktop
+ environments, but also with less dependencies.
+ .
+ The gnupg package is built without libcurl. So it does not support
+ HKPS keyservers. Install the gnupg-curl package if you want to use
+ the keyserver helper tools built with libcurl and supporting HKPS.
+
+Package: gnupg-curl
+Priority: optional
+Architecture: any
+Multi-Arch: foreign
+Depends: gnupg, ${misc:Depends}, ${shlibs:Depends}, ${shlibs:Suggests}
+Description: GNU privacy guard - a free PGP replacement (cURL)
+ GnuPG is GNU's tool for secure communication and data storage.
+ It can be used to encrypt data and to create digital signatures.
+ It includes an advanced key management facility and is compliant
+ with the proposed OpenPGP Internet standard as described in RFC 4880.
+ .
+ This package contains the keyserver helper tools built with libcurl,
+ which replace the ones in the gnupg package built with the "curl shim"
+ variant of gnupg. This package provides support for HKPS keyservers.
+
+Package: gpgv
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Suggests: gnupg
+Description: GNU privacy guard - signature verification tool
+ GnuPG is GNU's tool for secure communication and data storage.
+ .
+ gpgv is a stripped-down version of gnupg which is only able to check
+ signatures.  It is smaller than the full-blown gnupg and uses a
+ different (and simpler) way to check that the public keys used to
+ make the signature are trustworthy.
+
+Package: gpgv-udeb
+Package-Type: udeb
+Section: debian-installer
+Priority: extra
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: minimal signature verification tool
+ GnuPG is GNU's tool for secure communication and data storage.
+ It can be used to encrypt data and to create digital signatures.
+ It includes an advanced key management facility and is compliant
+ with the proposed OpenPGP Internet standard as described in RFC 4880.
+ .
+ This is GnuPG's signature verification tool, gpgv, packaged in minimal
+ form for use in debian-installer.
+
+Package: gnupg-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: gnupg (= ${binary:Version}) | gnupg-curl (= ${binary:Version}) | gpgv (= ${binary:Version}),
+         ${misc:Depends}
+Description: debugging symbols for gnupg
+ GnuPG is GNU's tool for secure communication and data storage.
+ .
+ This package contains the debugging symbols for gnupg, gpgv, and
+ gnupg-curl.

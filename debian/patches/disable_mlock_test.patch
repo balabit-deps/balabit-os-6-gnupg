@@ -1,0 +1,22 @@
+Description: Disable mlock() test since it fails with ulimit 0
+ This happens on Ubuntu buildds.
+Author: Michael Bienia <geser@ubuntu.com>
+Forwarded: no
+Last-Update: 2012-12-04
+
+Index: b/config.h.in
+===================================================================
+--- a/config.h.in
++++ b/config.h.in
+@@ -82,8 +82,11 @@
+ /* Define if `gethrtime(2)' does not work correctly i.e. issues a SIGILL. */
+ #undef HAVE_BROKEN_GETHRTIME
+ 
++/* Test doesn't work, since ulimit is sometimes 0... */
++#if 0
+ /* Defined if the mlock() call does not work */
+ #undef HAVE_BROKEN_MLOCK
++#endif
+ 
+ /* Define to 1 if the compiler understands __builtin_expect. */
+ #undef HAVE_BUILTIN_EXPECT

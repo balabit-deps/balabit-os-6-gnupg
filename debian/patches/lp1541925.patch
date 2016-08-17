@@ -1,0 +1,147 @@
+From d957e4388f72581b1ec801613b5629b5ea3f586d Mon Sep 17 00:00:00 2001
+From: NIIBE Yutaka <gniibe@fsij.org>
+Date: Fri, 12 Feb 2016 10:00:31 +0900
+Subject: [PATCH] g10: Make sure to have the directory for trustdb.
+
+* g10/tdbio.c (tdbio_set_dbname): Return earlier if !CREATE.  Check
+the directory and create it if none before calling take_write_lock.
+
+--
+
+Thanks to Marc Deslauriers for the bug report and his patch.
+
+GnuPG-bug-id: 2246
+
+Signed-off-by: NIIBE Yutaka <gniibe@fsij.org>
+
+(backport from master
+ commit 2f3e42047d17313eeb38d354048f343158402a8d)
+---
+ g10/tdbio.c | 97 +++++++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 52 insertions(+), 45 deletions(-)
+
+diff --git a/g10/tdbio.c b/g10/tdbio.c
+index 9d722c2..b01b550 100644
+--- a/g10/tdbio.c
++++ b/g10/tdbio.c
+@@ -477,7 +477,7 @@ create_version_record (void)
+ int
+ tdbio_set_dbname( const char *new_dbname, int create, int *r_nofile)
+ {
+-    char *fname;
++    char *fname, *p;
+     struct stat statbuf;
+     static int initialized = 0;
+ 
+@@ -512,57 +512,64 @@ tdbio_set_dbname( const char *new_dbname, int create, int *r_nofile)
+     if (stat (fname, &statbuf) == 0 && statbuf.st_size > 0)
+       /* OK, we have the valid trustdb.gpg already.  */
+       return 0;
++    else if (!create) {
++      *r_nofile = 1;
++      return 0;
++    }
++
++    /* Here comes: No valid trustdb.gpg AND CREATE==1 */
++
++    /*
++     * Make sure the directory exists.  This should be done before
++     * acquiring the lock, which assumes the directory existence.
++     */
++    p = strrchr( fname, DIRSEP_C );
++    assert(p);     /* See the code above.  Always, it has DIRSEP_C. */
++    *p = 0;
++    if( access( fname, F_OK ) ) {
++      try_make_homedir( fname );
++      if (access (fname, F_OK ))
++        log_fatal (_("%s: directory does not exist!\n"), p);
++    }
++    *p = DIRSEP_C;
+ 
+     take_write_lock ();
+ 
++    /* Check the file after aquiring the lock.  */
+     if( access( fname, R_OK ) ) {
++        FILE *fp;
++        TRUSTREC rec;
++        int rc;
++        mode_t oldmask;
++
+         if( errno != ENOENT )
+             log_fatal( _("can't access `%s': %s\n"), fname, strerror(errno) );
+ 
+-	if (!create)
+-          *r_nofile = 1;
+-        else {
+-	    FILE *fp;
+-	    TRUSTREC rec;
+-	    int rc;
+-	    char *p = strrchr( fname, DIRSEP_C );
+-	    mode_t oldmask;
+-
+-	    assert(p);
+-	    *p = 0;
+-	    if( access( fname, F_OK ) ) {
+-		try_make_homedir( fname );
+-                if (access (fname, F_OK ))
+-                  log_fatal (_("%s: directory does not exist!\n"), fname);
+-	    }
+-	    *p = DIRSEP_C;
+-
+-	    oldmask=umask(077);
+-            if (is_secured_filename (fname)) {
+-                fp = NULL;
+-                errno = EPERM;
+-            }
+-            else
+-                fp =fopen( fname, "wb" );
+-	    umask(oldmask);
+-	    if( !fp )
+-		log_fatal( _("can't create `%s': %s\n"), fname, strerror(errno) );
+-	    fclose(fp);
+-	    db_fd = open( db_name, O_RDWR | MY_O_BINARY );
+-	    if( db_fd == -1 )
+-		log_fatal( _("can't open `%s': %s\n"), db_name, strerror(errno) );
+-
+-            rc = create_version_record ();
+-	    if( rc )
+-		log_fatal( _("%s: failed to create version record: %s"),
+-						   fname, g10_errstr(rc));
+-	    /* and read again to check that we are okay */
+-	    if( tdbio_read_record( 0, &rec, RECTYPE_VER ) )
+-		log_fatal( _("%s: invalid trustdb created\n"), db_name );
+-
+-	    if( !opt.quiet )
+-		log_info(_("%s: trustdb created\n"), db_name);
+-	}
++        oldmask=umask(077);
++        if (is_secured_filename (fname)) {
++            fp = NULL;
++            errno = EPERM;
++        }
++        else
++            fp =fopen( fname, "wb" );
++        umask(oldmask);
++        if( !fp )
++            log_fatal( _("can't create `%s': %s\n"), fname, strerror(errno) );
++        fclose(fp);
++        db_fd = open( db_name, O_RDWR | MY_O_BINARY );
++        if( db_fd == -1 )
++            log_fatal( _("can't open `%s': %s\n"), db_name, strerror(errno) );
++
++        rc = create_version_record ();
++        if( rc )
++             log_fatal( _("%s: failed to create version record: %s"),
++                                                   fname, g10_errstr(rc));
++        /* and read again to check that we are okay */
++        if( tdbio_read_record( 0, &rec, RECTYPE_VER ) )
++            log_fatal( _("%s: invalid trustdb created\n"), db_name );
++
++        if( !opt.quiet )
++            log_info(_("%s: trustdb created\n"), db_name);
+     }
+ 
+     release_write_lock ();
+-- 
+2.1.4
+

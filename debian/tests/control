@@ -1,0 +1,2 @@
+Tests: gpgv-win32
+Depends: gpgv-win32, wine, wine32, gpg

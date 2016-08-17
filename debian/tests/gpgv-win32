@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+export GNUPGHOME=$(mktemp -d)
+
+# Generate a minimal signing key:
+gpg --batch --quick-random --gen-key <<EOF
+     %echo Generating a basic OpenPGP key
+     Key-Type: RSA
+     Key-Length: 1024
+     Key-Usage: sign
+     Name-Real: Test key for gpgv-win32
+     Name-Email: test-key@example.com
+     Expire-Date: 2d
+     %commit
+     %echo done
+EOF
+
+# Sign this very script
+rm -f "${0}.gpg"
+gpg --output "${0}.gpg" --detach-sign "${0}"
+
+# Verify using gpgv
+gpgv --keyring "$GNUPGHOME/pubring.gpg" "${0}.gpg" "${0}"
+
+# Verify using gpgv.exe
+wine /usr/share/win32/gpgv.exe --keyring "Z:\\\\${GNUPGHOME}/pubring.gpg" "Z:\\\\$(pwd)/${0}.gpg" "Z:\\\\$(pwd)/${0}"
