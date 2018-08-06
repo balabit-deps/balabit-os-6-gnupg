@@ -1,3 +1,17 @@
+gnupg (1.4.20-1ubuntu3.3) xenial-security; urgency=medium
+
+  * SECURITY UPDATE: full RSA key recovery via side-channel attack
+    - debian/patches/CVE-2017-7526-1.patch: simplify loop in mpi/mpi-pow.c.
+    - debian/patches/CVE-2017-7526-2.patch: use same computation for square
+      and multiply in mpi/mpi-pow.c.
+    - debian/patches/CVE-2017-7526-3.patch: fix allocation size for mpi_pow
+    - debian/patches/CVE-2017-7526-4.patch: add exponent blinding in
+      cipher/rsa.c.
+    - debian/patches/CVE-2017-7526-5.patch: allow different build directory
+    - CVE-2017-7526
+
+ -- Alex Murray <alex.murray@canonical.com>  Mon, 06 Aug 2018 09:59:18 +0930
+
 gnupg (1.4.20-1ubuntu3.2) xenial-security; urgency=medium
 
   * SECURITY UPDATE: missing sanitization of verbose output
